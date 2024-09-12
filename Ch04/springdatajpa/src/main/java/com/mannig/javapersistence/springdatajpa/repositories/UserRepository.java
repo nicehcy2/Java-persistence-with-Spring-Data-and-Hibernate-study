@@ -1,14 +1,17 @@
 package com.mannig.javapersistence.springdatajpa.repositories;
 
+import com.mannig.javapersistence.springdatajpa.model.Projection;
 import com.mannig.javapersistence.springdatajpa.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.util.Streamable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -70,4 +73,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u.username, LENGTH(u.email) as email_length from " +
             "#{#entityName} u where u.username like %?1%")
     List<Object[]> findByAsArrayAndSort(String text, Sort sort);
+
+    List<Projection.UserSummary> findByRegistrationDateAfter(LocalDate date);
+    List<Projection.UserNameOnly> findByEmail(String email);
+    <T> List<T> findByEmail(String email, Class<T> type);
+
+    @Modifying
+    @Transactional
+    @Query("update User u set u.level = ?2 where u.level = ?1")
+    int updateLevel(int oldLevel, int newLevel);
+
+    @Transactional
+    int deleteByLevel(int level);
+
+    @Transactional
+    @Modifying
+    @Query("delete from User u where u.level = ?1")
+    int deleteBulkByLevel(int level);
 }
